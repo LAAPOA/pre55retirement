@@ -333,6 +333,7 @@
         <label class="opt"><input type="radio" name="timeframe" value="1-2 years"> 1 – 2 years <span class="est" data-min="1" data-max="2"></span></label>
         <label class="opt"><input type="radio" name="timeframe" value="3-5 years"> 3 – 5 years <span class="est" data-min="3" data-max="5"></span></label>
         <label class="opt"><input type="radio" name="timeframe" value="5+ years"> More than 5 years <span class="est" data-min="5" data-max=""></span></label>
+        <label class="opt"><input type="radio" name="timeframe" value="Recently retired - benefits until 55"> I recently retired and would like to receive benefits &rsquo;til my 55th birthday <span class="est" data-to55="1"></span></label>
       </div>
     </div>
 
@@ -398,6 +399,28 @@
     return age;
   }
 
+  function timeTo55(birth) {
+    const now = new Date();
+    now.setHours(0,0,0,0);
+    const fiftyFive = new Date(birth.getFullYear() + 55, birth.getMonth(), birth.getDate());
+    if (fiftyFive <= now) return null;
+
+    let totalMonths = (fiftyFive.getFullYear() - now.getFullYear()) * 12
+                    + (fiftyFive.getMonth() - now.getMonth());
+    let anchor = new Date(now.getFullYear(), now.getMonth() + totalMonths, now.getDate());
+    if (anchor > fiftyFive) {
+      totalMonths--;
+      anchor = new Date(now.getFullYear(), now.getMonth() + totalMonths, now.getDate());
+    }
+    const years  = Math.floor(totalMonths / 12);
+    const months = totalMonths % 12;
+    const remDays = Math.round((fiftyFive - anchor) / 86400000);
+    const weeks = Math.floor(remDays / 7);
+    const days  = remDays % 7;
+
+    return years + ' yr, ' + months + ' mo, ' + weeks + ' wk, ' + days + ' d';
+  }
+
   function updateAge() {
     const birth = parseDOB(dob.value);
     if (!birth) {
@@ -412,33 +435,8 @@
     ageValue.textContent = age;
     ageBox.classList.add('filled');
 
-    // countdown to their 55th birthday
-    const now = new Date();
-    now.setHours(0,0,0,0);
-    const fiftyFive = new Date(birth.getFullYear() + 55, birth.getMonth(), birth.getDate());
-
-    if (fiftyFive <= now) {
-      ageSub.textContent = 'age 55 reached';
-      return;
-    }
-
-    // whole years + months first
-    let totalMonths = (fiftyFive.getFullYear() - now.getFullYear()) * 12
-                    + (fiftyFive.getMonth() - now.getMonth());
-    let anchor = new Date(now.getFullYear(), now.getMonth() + totalMonths, now.getDate());
-    if (anchor > fiftyFive) {
-      totalMonths--;
-      anchor = new Date(now.getFullYear(), now.getMonth() + totalMonths, now.getDate());
-    }
-    const years  = Math.floor(totalMonths / 12);
-    const months = totalMonths % 12;
-
-    // remainder into weeks + days
-    const remDays = Math.round((fiftyFive - anchor) / 86400000);
-    const weeks = Math.floor(remDays / 7);
-    const days  = remDays % 7;
-
-    ageSub.textContent = 'to 55: ' + years + ' yr, ' + months + ' mo, ' + weeks + ' wk, ' + days + ' d';
+    const t = timeTo55(birth);
+    ageSub.textContent = t === null ? 'age 55 reached' : 'to 55: ' + t;
   }
 
   // ── Estimated age per retirement timeframe ─────────────────────────
@@ -459,6 +457,12 @@
       if (!birth) {
         tag.classList.remove('show');
         tag.textContent = '';
+        return;
+      }
+      if (tag.dataset.to55) {
+        const t = timeTo55(birth);
+        tag.textContent = t === null ? 'Age 55 reached' : 'Time until your 55th birthday: ' + t;
+        tag.classList.add('show');
         return;
       }
       const min = parseInt(tag.dataset.min, 10);
