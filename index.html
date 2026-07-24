@@ -49,6 +49,21 @@
   }
   .clock-watermark svg { width: 100%; height: 100%; display: block; }
 
+  /* ---- lounge chair watermark behind the submit button ---- */
+  .submit-wrap { position: relative; padding-bottom: 150px; }
+  .submit-wrap .beach-watermark {
+    position: absolute;
+    left: 50%;
+    top: 10px;
+    transform: translateX(-50%);
+    width: 320px;
+    max-width: 90%;
+    opacity: .22;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .submit-wrap button { position: relative; z-index: 1; }
+
   .title-bar .logo {
     display: block;
     margin: 0 auto 14px;
@@ -306,7 +321,12 @@
       </div>
     </div>
 
-    <button type="submit" id="submitBtn">Submit Survey</button>
+    <div class="submit-wrap">
+      <img class="beach-watermark" aria-hidden="true"
+           src="https://github.com/LAAPOA/imageauthority/raw/main/%E2%80%94Pngtree%E2%80%94lounge%20chair%20with%20a%20palm_15306350.png"
+           alt="">
+      <button type="submit" id="submitBtn">Submit Survey</button>
+    </div>
     <div class="status" id="status"></div>
 
   </form>
