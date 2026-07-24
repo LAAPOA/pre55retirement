@@ -172,6 +172,19 @@
   }
   .opt:hover { border-color: var(--navy-mid); box-shadow: 0 2px 8px rgba(61,107,168,.15); }
   .opt input { width: 19px; height: 19px; accent-color: var(--navy-mid); cursor: pointer; flex-shrink: 0; }
+  .opt .est {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--navy-mid);
+    background: #eef3fa;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 3px 10px;
+    white-space: nowrap;
+    display: none;
+  }
+  .opt .est.show { display: inline-block; }
   .opt:has(input:checked) { border-color: var(--navy); background: #f4f8ff; font-weight: bold; color: var(--navy); }
   .opt:focus-within { outline: 2px solid var(--navy-mid); outline-offset: 2px; }
 
@@ -313,11 +326,11 @@
 
     <div class="field">
       <label class="q">Projected retirement timeframe</label>
-      <div class="options stack">
-        <label class="opt"><input type="radio" name="timeframe" value="Within 12 months"> Within 12 months</label>
-        <label class="opt"><input type="radio" name="timeframe" value="1-2 years"> 1 – 2 years</label>
-        <label class="opt"><input type="radio" name="timeframe" value="3-5 years"> 3 – 5 years</label>
-        <label class="opt"><input type="radio" name="timeframe" value="5+ years"> More than 5 years</label>
+      <div class="options stack" id="timeframeOpts">
+        <label class="opt"><input type="radio" name="timeframe" value="Within 12 months"> Within 12 months <span class="est" data-min="0" data-max="1"></span></label>
+        <label class="opt"><input type="radio" name="timeframe" value="1-2 years"> 1 – 2 years <span class="est" data-min="1" data-max="2"></span></label>
+        <label class="opt"><input type="radio" name="timeframe" value="3-5 years"> 3 – 5 years <span class="est" data-min="3" data-max="5"></span></label>
+        <label class="opt"><input type="radio" name="timeframe" value="5+ years"> More than 5 years <span class="est" data-min="5" data-max=""></span></label>
       </div>
     </div>
 
@@ -359,8 +372,9 @@
     else if (d.length === 2 && !back) out = d + '/';
     dob.value = out;
     updateAge();
+    updateEstimates();
   });
-  dob.addEventListener('blur', updateAge);
+  dob.addEventListener('blur', function () { updateAge(); updateEstimates(); });
 
   function parseDOB(str) {
     const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(str.trim());
@@ -423,6 +437,40 @@
     ageSub.textContent = 'to 55: ' + months + ' mo, ' + weeks + ' wk, ' + days + ' d';
   }
 
+  // ── Estimated age per retirement timeframe ─────────────────────────
+  const estTags = document.querySelectorAll('#timeframeOpts .est');
+
+  function ageAt(birth, yearsFromNow) {
+    const now = new Date();
+    const future = new Date(now.getFullYear() + yearsFromNow, now.getMonth(), now.getDate());
+    let a = future.getFullYear() - birth.getFullYear();
+    const m = future.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && future.getDate() < birth.getDate())) a--;
+    return a;
+  }
+
+  function updateEstimates() {
+    const birth = parseDOB(dob.value);
+    estTags.forEach(function (tag) {
+      if (!birth) {
+        tag.classList.remove('show');
+        tag.textContent = '';
+        return;
+      }
+      const min = parseInt(tag.dataset.min, 10);
+      const max = tag.dataset.max === '' ? null : parseInt(tag.dataset.max, 10);
+      let txt;
+      if (max === null) {
+        txt = 'age ' + ageAt(birth, min) + '+';
+      } else {
+        const a1 = ageAt(birth, min), a2 = ageAt(birth, max);
+        txt = a1 === a2 ? 'age ' + a1 : 'age ' + a1 + '\u2013' + a2;
+      }
+      tag.textContent = txt;
+      tag.classList.add('show');
+    });
+  }
+
   // ── Submit ─────────────────────────────────────────────────────────
   const form   = document.getElementById('survey');
   const status = document.getElementById('status');
@@ -445,6 +493,8 @@
     if (!trust)  return fail('Select an answer for the Welfare and Benefits Trust question.');
     if (!time)   return fail('Select a projected retirement timeframe.');
 
+    const estTag = time.closest('.opt').querySelector('.est');
+
     const payload = {
       name:      name,
       serial:    serial,
@@ -452,6 +502,7 @@
       age:       calcAge(birth),
       trust:     trust.value,
       timeframe: time.value,
+      estAge:    estTag ? estTag.textContent : '',
       submitted: new Date().toString()
     };
 
