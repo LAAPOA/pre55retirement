@@ -126,7 +126,7 @@
   .dob-row { display: flex; gap: 14px; align-items: stretch; }
   .dob-row .dob-input { flex: 1; }
   .age-box {
-    width: 118px;
+    width: 170px;
     flex-shrink: 0;
     border: 2px solid var(--line);
     border-radius: 6px;
@@ -151,7 +151,7 @@
     color: var(--navy);
     line-height: 1.15;
   }
-  .age-box .age-sub { font-size: 10px; color: var(--muted); }
+  .age-box .age-sub { font-size: 11px; color: var(--muted); line-height: 1.35; padding: 0 4px; }
 
   /* ---- choices ---- */
   .options { display: flex; gap: 12px; flex-wrap: wrap; }
@@ -396,12 +396,31 @@
     ageValue.textContent = age;
     ageBox.classList.add('filled');
 
-    // days until the next birthday — useful context for a pre-55 survey
+    // countdown to their 55th birthday
     const now = new Date();
-    let next = new Date(now.getFullYear(), birth.getMonth(), birth.getDate());
-    if (next < now) next = new Date(now.getFullYear() + 1, birth.getMonth(), birth.getDate());
-    const days = Math.ceil((next - now) / 86400000);
-    ageSub.textContent = days === 0 ? 'birthday today' : 'turns ' + (age + 1) + ' in ' + days + 'd';
+    now.setHours(0,0,0,0);
+    const fiftyFive = new Date(birth.getFullYear() + 55, birth.getMonth(), birth.getDate());
+
+    if (fiftyFive <= now) {
+      ageSub.textContent = 'age 55 reached';
+      return;
+    }
+
+    // whole months first
+    let months = (fiftyFive.getFullYear() - now.getFullYear()) * 12
+               + (fiftyFive.getMonth() - now.getMonth());
+    let anchor = new Date(now.getFullYear(), now.getMonth() + months, now.getDate());
+    if (anchor > fiftyFive) {
+      months--;
+      anchor = new Date(now.getFullYear(), now.getMonth() + months, now.getDate());
+    }
+
+    // remainder into weeks + days
+    const remDays = Math.round((fiftyFive - anchor) / 86400000);
+    const weeks = Math.floor(remDays / 7);
+    const days  = remDays % 7;
+
+    ageSub.textContent = 'to 55: ' + months + ' mo, ' + weeks + ' wk, ' + days + ' d';
   }
 
   // ── Submit ─────────────────────────────────────────────────────────
