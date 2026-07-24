@@ -420,21 +420,23 @@
       return;
     }
 
-    // whole months first
-    let months = (fiftyFive.getFullYear() - now.getFullYear()) * 12
-               + (fiftyFive.getMonth() - now.getMonth());
-    let anchor = new Date(now.getFullYear(), now.getMonth() + months, now.getDate());
+    // whole years + months first
+    let totalMonths = (fiftyFive.getFullYear() - now.getFullYear()) * 12
+                    + (fiftyFive.getMonth() - now.getMonth());
+    let anchor = new Date(now.getFullYear(), now.getMonth() + totalMonths, now.getDate());
     if (anchor > fiftyFive) {
-      months--;
-      anchor = new Date(now.getFullYear(), now.getMonth() + months, now.getDate());
+      totalMonths--;
+      anchor = new Date(now.getFullYear(), now.getMonth() + totalMonths, now.getDate());
     }
+    const years  = Math.floor(totalMonths / 12);
+    const months = totalMonths % 12;
 
     // remainder into weeks + days
     const remDays = Math.round((fiftyFive - anchor) / 86400000);
     const weeks = Math.floor(remDays / 7);
     const days  = remDays % 7;
 
-    ageSub.textContent = 'to 55: ' + months + ' mo, ' + weeks + ' wk, ' + days + ' d';
+    ageSub.textContent = 'to 55: ' + years + ' yr, ' + months + ' mo, ' + weeks + ' wk, ' + days + ' d';
   }
 
   // ── Estimated age per retirement timeframe ─────────────────────────
